@@ -5,6 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/theme/liquid_glass_theme.dart';
+import '../../../shared/widgets/glass_card.dart';
+import '../../../shared/widgets/glass_button.dart';
+import '../../../shared/widgets/glass_input.dart';
+import '../../../shared/widgets/glass_scaffold.dart';
 import '../../../shared/widgets/step_progress_indicator.dart';
 import '../providers/collection_provider.dart';
 
@@ -19,18 +24,16 @@ class DocumentationScreen extends ConsumerStatefulWidget {
 }
 
 class _DocumentationScreenState extends ConsumerState<DocumentationScreen> {
-  final ImagePicker _picker = ImagePicker();
-
   Future<void> _takePhoto() async {
     try {
-      final XFile? photo = await _picker.pickImage(
+      final picker = ImagePicker();
+      final photo = await picker.pickImage(
         source: ImageSource.camera,
         maxWidth: 1920,
         maxHeight: 1080,
         imageQuality: 85,
       );
-
-      if (photo != null) {
+      if (photo != null && mounted) {
         ref
             .read(collectionProvider(widget.missionId).notifier)
             .addPhoto(photo.path);
@@ -39,23 +42,25 @@ class _DocumentationScreenState extends ConsumerState<DocumentationScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Erreur caméra: $e')));
+        ).showSnackBar(SnackBar(content: Text('Erreur photo: $e')));
       }
     }
   }
 
   Future<void> _pickFromGallery() async {
     try {
-      final List<XFile> images = await _picker.pickMultiImage(
+      final picker = ImagePicker();
+      final images = await picker.pickMultiImage(
         maxWidth: 1920,
         maxHeight: 1080,
         imageQuality: 85,
       );
-
-      for (final image in images) {
-        ref
-            .read(collectionProvider(widget.missionId).notifier)
-            .addPhoto(image.path);
+      for (final img in images) {
+        if (mounted) {
+          ref
+              .read(collectionProvider(widget.missionId).notifier)
+              .addPhoto(img.path);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -68,51 +73,49 @@ class _DocumentationScreenState extends ConsumerState<DocumentationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final collectionData = ref.watch(collectionProvider(widget.missionId));
+    final photos = collectionData.documentation?.photos ?? [];
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Documentation')),
+    return GlassScaffold(
+      title: 'Documentation',
       body: Column(
         children: [
           const StepProgressIndicator(currentStep: 6),
           Expanded(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Photos & Documents',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'Documentation Photo',
+                    style: LiquidGlass.heading(fontSize: 22),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
-                    'Ajoutez des photos et documents justificatifs',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    'Prenez des photos de l\'échantillon et du site',
+                    style: LiquidGlass.bodySecondary(),
                   ),
                   const SizedBox(height: 24),
 
-                  // Action buttons
+                  // Photo buttons
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton.icon(
+                        child: GlassButton(
+                          label: 'Caméra',
+                          icon: Icons.camera_alt,
+                          isOutlined: true,
                           onPressed: _takePhoto,
-                          icon: const Icon(Icons.camera_alt),
-                          label: const Text('Caméra'),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: OutlinedButton.icon(
+                        child: GlassButton(
+                          label: 'Galerie',
+                          icon: Icons.photo_library,
+                          isOutlined: true,
                           onPressed: _pickFromGallery,
-                          icon: const Icon(Icons.photo_library),
-                          label: const Text('Galerie'),
                         ),
                       ),
                     ],
@@ -120,105 +123,100 @@ class _DocumentationScreenState extends ConsumerState<DocumentationScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Photo count
-                  Text(
-                    '${(collectionData.documentation?.photos ?? []).length} photo(s) ajoutée(s)',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
                   // Photo grid
-                  Expanded(
-                    child: (collectionData.documentation?.photos ?? []).isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.add_a_photo,
-                                  size: 64,
-                                  color: theme.colorScheme.onSurfaceVariant
-                                      .withValues(alpha: 0.3),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Aucune photo ajoutée',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
+                  if (photos.isEmpty)
+                    GlassCard(
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.add_a_photo_outlined,
+                              size: 48,
+                              color: Colors.white.withValues(alpha: 0.20),
                             ),
-                          )
-                        : GridView.builder(
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                ),
-                            itemCount:
-                                (collectionData.documentation?.photos ?? [])
-                                    .length,
-                            itemBuilder: (context, index) {
-                              return Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.file(
-                                      File(
-                                        (collectionData.documentation?.photos ??
-                                            [])[index],
-                                      ),
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Container(
-                                        decoration: BoxDecoration(
-                                          color: theme
-                                              .colorScheme
-                                              .surfaceContainerHighest,
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        child: const Icon(Icons.broken_image),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 4,
-                                    right: 4,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        ref
-                                            .read(
-                                              collectionProvider(
-                                                widget.missionId,
-                                              ).notifier,
-                                            )
-                                            .removePhoto(index);
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.all(4),
-                                        decoration: const BoxDecoration(
-                                          color: Colors.black54,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.close,
-                                          size: 16,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
+                            const SizedBox(height: 12),
+                            Text(
+                              'Aucune photo ajoutée',
+                              style: LiquidGlass.bodySecondary(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
                           ),
+                      itemCount: photos.length,
+                      itemBuilder: (context, index) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.file(
+                                File(photos[index]),
+                                fit: BoxFit.cover,
+                                errorBuilder: (ctx1, err, stack) => Container(
+                                  color: LiquidGlass.inputFill,
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    color: LiquidGlass.textSecondary,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    ref
+                                        .read(
+                                          collectionProvider(
+                                            widget.missionId,
+                                          ).notifier,
+                                        )
+                                        .removePhoto(index);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.6,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+
+                  const SizedBox(height: 24),
+
+                  // Notes
+                  GlassInput(
+                    controller: TextEditingController(
+                      text: collectionData.documentation?.notes ?? '',
+                    ),
+                    maxLines: 4,
+                    labelText: 'Notes de documentation',
+                    alignLabelWithHint: true,
+                    prefixIcon: const Icon(Icons.notes),
                   ),
                 ],
               ),
@@ -229,17 +227,18 @@ class _DocumentationScreenState extends ConsumerState<DocumentationScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: GlassButton(
+                    label: 'Précédent',
+                    isOutlined: true,
                     onPressed: () => context.pop(),
-                    child: const Text('Précédent'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: FilledButton(
+                  child: GlassButton(
+                    label: 'Suivant',
                     onPressed: () =>
                         context.push('/collection/${widget.missionId}/export'),
-                    child: const Text('Suivant'),
                   ),
                 ),
               ],

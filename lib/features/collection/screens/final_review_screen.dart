@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/liquid_glass_theme.dart';
+import '../../../shared/widgets/glass_card.dart';
+import '../../../shared/widgets/glass_button.dart';
+import '../../../shared/widgets/glass_scaffold.dart';
 import '../../../shared/widgets/step_progress_indicator.dart';
 import '../providers/collection_provider.dart';
 
@@ -12,11 +16,10 @@ class FinalReviewScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final data = ref.watch(collectionProvider(missionId));
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Révision Finale')),
+    return GlassScaffold(
+      title: 'Révision Finale',
       body: Column(
         children: [
           const StepProgressIndicator(currentStep: 8),
@@ -28,26 +31,20 @@ class FinalReviewScreen extends ConsumerWidget {
                 children: [
                   Text(
                     'Résumé de la Collecte',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: LiquidGlass.heading(fontSize: 22),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     'Vérifiez les informations avant validation',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    style: LiquidGlass.bodySecondary(),
                   ),
                   const SizedBox(height: 24),
 
-                  // Sections
                   _ReviewSection(
                     title: 'Catégorie',
                     icon: Icons.category,
                     items: [_ReviewItem('Type', data.category ?? 'Non défini')],
                   ),
-
                   _ReviewSection(
                     title: 'Localisation',
                     icon: Icons.location_on,
@@ -63,7 +60,6 @@ class FinalReviewScreen extends ConsumerWidget {
                         ),
                     ],
                   ),
-
                   _ReviewSection(
                     title: 'Client',
                     icon: Icons.person,
@@ -73,7 +69,6 @@ class FinalReviewScreen extends ConsumerWidget {
                       _ReviewItem('Adresse', data.clientInfo?.adresse ?? '-'),
                     ],
                   ),
-
                   _ReviewSection(
                     title: 'Produit',
                     icon: Icons.inventory_2,
@@ -83,7 +78,6 @@ class FinalReviewScreen extends ConsumerWidget {
                       _ReviewItem('Lot', data.productInfo?.lot ?? '-'),
                     ],
                   ),
-
                   _ReviewSection(
                     title: 'Échantillon',
                     icon: Icons.science,
@@ -99,7 +93,6 @@ class FinalReviewScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-
                   _ReviewSection(
                     title: 'Analyses',
                     icon: Icons.analytics,
@@ -116,7 +109,6 @@ class FinalReviewScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-
                   _ReviewSection(
                     title: 'Documentation',
                     icon: Icons.photo_camera,
@@ -127,7 +119,6 @@ class FinalReviewScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-
                   _ReviewSection(
                     title: 'Export',
                     icon: Icons.upload_file,
@@ -148,17 +139,19 @@ class FinalReviewScreen extends ConsumerWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: GlassButton(
+                    label: 'Précédent',
+                    isOutlined: true,
                     onPressed: () => context.pop(),
-                    child: const Text('Précédent'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: FilledButton(
+                  child: GlassButton(
+                    label: 'Valider & Terminer',
+                    accentColor: LiquidGlass.done,
                     onPressed: () =>
                         context.push('/collection/$missionId/completion'),
-                    child: const Text('Valider & Terminer'),
                   ),
                 ),
               ],
@@ -183,32 +176,29 @@ class _ReviewSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GlassCard(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(icon, size: 20, color: theme.colorScheme.primary),
+                Icon(icon, size: 18, color: LiquidGlass.accentBlue),
                 const SizedBox(width: 8),
                 Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
+                  title.toUpperCase(),
+                  style: LiquidGlass.label().copyWith(
+                    color: LiquidGlass.accentBlue,
                   ),
                 ),
               ],
             ),
-            const Divider(),
+            Divider(color: Colors.white.withValues(alpha: 0.10), height: 20),
             ...items.map(
               (item) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(vertical: 3),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -216,15 +206,13 @@ class _ReviewSection extends StatelessWidget {
                       width: 100,
                       child: Text(
                         item.label,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                        style: LiquidGlass.bodySecondary(fontSize: 12),
                       ),
                     ),
                     Expanded(
                       child: Text(
                         item.value,
-                        style: theme.textTheme.bodyMedium,
+                        style: LiquidGlass.body(fontSize: 14),
                       ),
                     ),
                   ],
@@ -241,6 +229,5 @@ class _ReviewSection extends StatelessWidget {
 class _ReviewItem {
   final String label;
   final String value;
-
   const _ReviewItem(this.label, this.value);
 }

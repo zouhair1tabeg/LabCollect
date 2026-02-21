@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/liquid_glass_theme.dart';
+import '../../../shared/widgets/glass_button.dart';
+import '../../../shared/widgets/glass_input.dart';
+import '../../../shared/widgets/glass_scaffold.dart';
 import '../../../shared/widgets/step_progress_indicator.dart';
 import '../providers/collection_provider.dart';
 
@@ -67,10 +71,8 @@ class _AnalysisRequirementsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Exigences Analyse')),
+    return GlassScaffold(
+      title: 'Exigences Analyse',
       body: Column(
         children: [
           const StepProgressIndicator(currentStep: 5),
@@ -82,48 +84,71 @@ class _AnalysisRequirementsScreenState
                 children: [
                   Text(
                     'Exigences d\'Analyse',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: LiquidGlass.heading(fontSize: 22),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     'Sélectionnez les types d\'analyses requises',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    style: LiquidGlass.bodySecondary(),
                   ),
                   const SizedBox(height: 24),
 
-                  // Analysis types as chips
-                  Text('Types d\'analyse', style: theme.textTheme.titleSmall),
-                  const SizedBox(height: 8),
+                  Text('TYPES D\'ANALYSE', style: LiquidGlass.label()),
+                  const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: _analysisTypes.map((type) {
                       final isSelected = _selectedTypes.contains(type);
-                      return FilterChip(
-                        label: Text(type),
-                        selected: isSelected,
-                        onSelected: (selected) {
+                      return GestureDetector(
+                        onTap: () {
                           setState(() {
-                            if (selected) {
-                              _selectedTypes.add(type);
-                            } else {
+                            if (isSelected) {
                               _selectedTypes.remove(type);
+                            } else {
+                              _selectedTypes.add(type);
                             }
                           });
                         },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? LiquidGlass.accentBlue.withValues(alpha: 0.20)
+                                : Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected
+                                  ? LiquidGlass.accentBlue.withValues(
+                                      alpha: 0.50,
+                                    )
+                                  : Colors.white.withValues(alpha: 0.15),
+                            ),
+                          ),
+                          child: Text(
+                            type,
+                            style: LiquidGlass.body(fontSize: 13).copyWith(
+                              color: isSelected
+                                  ? LiquidGlass.accentBlue
+                                  : LiquidGlass.textSecondary,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                        ),
                       );
                     }).toList(),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
 
-                  // Priority
-                  Text('Priorité', style: theme.textTheme.titleSmall),
-                  const SizedBox(height: 8),
+                  Text('PRIORITÉ', style: LiquidGlass.label()),
+                  const SizedBox(height: 10),
                   SegmentedButton<String>(
                     segments: _priorities.map((p) {
                       return ButtonSegment(value: p, label: Text(p));
@@ -136,15 +161,12 @@ class _AnalysisRequirementsScreenState
 
                   const SizedBox(height: 24),
 
-                  // Notes
-                  TextFormField(
+                  GlassInput(
                     controller: _notesController,
                     maxLines: 4,
-                    decoration: const InputDecoration(
-                      labelText: 'Notes supplémentaires',
-                      alignLabelWithHint: true,
-                      prefixIcon: Icon(Icons.notes),
-                    ),
+                    labelText: 'Notes supplémentaires',
+                    alignLabelWithHint: true,
+                    prefixIcon: const Icon(Icons.notes),
                   ),
                 ],
               ),
@@ -155,16 +177,17 @@ class _AnalysisRequirementsScreenState
             child: Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: GlassButton(
+                    label: 'Précédent',
+                    isOutlined: true,
                     onPressed: () => context.pop(),
-                    child: const Text('Précédent'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: FilledButton(
+                  child: GlassButton(
+                    label: 'Suivant',
                     onPressed: _selectedTypes.isNotEmpty ? _saveAndNext : null,
-                    child: const Text('Suivant'),
                   ),
                 ),
               ],

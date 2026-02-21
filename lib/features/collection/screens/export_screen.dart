@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/liquid_glass_theme.dart';
+import '../../../shared/widgets/glass_card.dart';
+import '../../../shared/widgets/glass_button.dart';
+import '../../../shared/widgets/glass_scaffold.dart';
 import '../../../shared/widgets/step_progress_indicator.dart';
 import '../providers/collection_provider.dart';
 
@@ -19,10 +23,10 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
   String _selectedDestination = 'Serveur';
 
   static const List<Map<String, dynamic>> _formats = [
-    {'name': 'PDF', 'icon': Icons.picture_as_pdf, 'color': Color(0xFFE53935)},
-    {'name': 'Excel', 'icon': Icons.table_chart, 'color': Color(0xFF43A047)},
-    {'name': 'CSV', 'icon': Icons.description, 'color': Color(0xFF1E88E5)},
-    {'name': 'JSON', 'icon': Icons.data_object, 'color': Color(0xFFF57C00)},
+    {'name': 'PDF', 'icon': Icons.picture_as_pdf, 'color': Color(0xFFEF9A9A)},
+    {'name': 'Excel', 'icon': Icons.table_chart, 'color': Color(0xFFA5D6A7)},
+    {'name': 'CSV', 'icon': Icons.description, 'color': Color(0xFF4FC3F7)},
+    {'name': 'JSON', 'icon': Icons.data_object, 'color': Color(0xFFFFB74D)},
   ];
 
   static const List<Map<String, dynamic>> _destinations = [
@@ -59,10 +63,8 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Export')),
+    return GlassScaffold(
+      title: 'Export',
       body: Column(
         children: [
           const StepProgressIndicator(currentStep: 7),
@@ -74,100 +76,126 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                 children: [
                   Text(
                     'Options d\'Export',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: LiquidGlass.heading(fontSize: 22),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     'Choisissez le format et la destination',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    style: LiquidGlass.bodySecondary(),
                   ),
                   const SizedBox(height: 24),
 
-                  // Format selection
-                  Text('Format de fichier', style: theme.textTheme.titleSmall),
+                  Text('FORMAT DE FICHIER', style: LiquidGlass.label()),
                   const SizedBox(height: 12),
                   Row(
                     children: _formats.map((format) {
                       final isSelected = _selectedFormat == format['name'];
+                      final color = format['color'] as Color;
                       return Expanded(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: ChoiceChip(
-                            label: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  format['icon'] as IconData,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : format['color'] as Color,
-                                  size: 24,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  format['name'] as String,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: isSelected ? Colors.white : null,
-                                  ),
-                                ),
-                              ],
+                          child: GestureDetector(
+                            onTap: () => setState(
+                              () => _selectedFormat = format['name'] as String,
                             ),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              if (selected) {
-                                setState(
-                                  () => _selectedFormat =
-                                      format['name'] as String,
-                                );
-                              }
-                            },
-                            selectedColor: format['color'] as Color,
-                            padding: const EdgeInsets.all(12),
-                            showCheckmark: false,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? color.withValues(alpha: 0.15)
+                                    : Colors.white.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? color
+                                      : Colors.white.withValues(alpha: 0.10),
+                                  width: isSelected ? 2 : 1,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    format['icon'] as IconData,
+                                    color: color,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    format['name'] as String,
+                                    style: LiquidGlass.body(fontSize: 12)
+                                        .copyWith(
+                                          color: isSelected
+                                              ? color
+                                              : LiquidGlass.textSecondary,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       );
                     }).toList(),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
 
-                  // Destination selection
-                  Text('Destination', style: theme.textTheme.titleSmall),
+                  Text('DESTINATION', style: LiquidGlass.label()),
                   const SizedBox(height: 12),
                   ...(_destinations).map((dest) {
                     final isSelected = _selectedDestination == dest['name'];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      color: isSelected
-                          ? theme.colorScheme.primaryContainer
-                          : null,
-                      child: ListTile(
-                        leading: Icon(
-                          dest['icon'] as IconData,
-                          color: isSelected ? theme.colorScheme.primary : null,
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: GestureDetector(
+                        onTap: () => setState(
+                          () => _selectedDestination = dest['name'] as String,
                         ),
-                        title: Text(dest['name'] as String),
-                        subtitle: Text(dest['desc'] as String),
-                        trailing: isSelected
-                            ? Icon(
-                                Icons.check_circle,
-                                color: theme.colorScheme.primary,
-                              )
-                            : null,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        child: GlassCard(
+                          padding: const EdgeInsets.all(16),
+                          borderColor: isSelected
+                              ? LiquidGlass.accentBlue.withValues(alpha: 0.50)
+                              : null,
+                          child: Row(
+                            children: [
+                              Icon(
+                                dest['icon'] as IconData,
+                                color: isSelected
+                                    ? LiquidGlass.accentBlue
+                                    : LiquidGlass.textSecondary,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      dest['name'] as String,
+                                      style: LiquidGlass.body().copyWith(
+                                        color: isSelected
+                                            ? LiquidGlass.accentBlue
+                                            : LiquidGlass.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Text(
+                                      dest['desc'] as String,
+                                      style: LiquidGlass.bodySecondary(
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check_circle,
+                                  color: LiquidGlass.accentBlue,
+                                  size: 22,
+                                ),
+                            ],
+                          ),
                         ),
-                        onTap: () {
-                          setState(
-                            () => _selectedDestination = dest['name'] as String,
-                          );
-                        },
                       ),
                     );
                   }),
@@ -180,17 +208,15 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: GlassButton(
+                    label: 'Précédent',
+                    isOutlined: true,
                     onPressed: () => context.pop(),
-                    child: const Text('Précédent'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: FilledButton(
-                    onPressed: _saveAndNext,
-                    child: const Text('Suivant'),
-                  ),
+                  child: GlassButton(label: 'Suivant', onPressed: _saveAndNext),
                 ),
               ],
             ),

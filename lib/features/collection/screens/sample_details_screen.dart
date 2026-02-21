@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/theme/liquid_glass_theme.dart';
+import '../../../shared/widgets/glass_button.dart';
+import '../../../shared/widgets/glass_input.dart';
+import '../../../shared/widgets/glass_scaffold.dart';
 import '../../../shared/widgets/step_progress_indicator.dart';
 import '../providers/collection_provider.dart';
 
@@ -74,10 +78,8 @@ class _SampleDetailsScreenState extends ConsumerState<SampleDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Détails Échantillon')),
+    return GlassScaffold(
+      title: 'Détails Échantillon',
       body: Column(
         children: [
           const StepProgressIndicator(currentStep: 4),
@@ -91,48 +93,43 @@ class _SampleDetailsScreenState extends ConsumerState<SampleDetailsScreen> {
                   children: [
                     Text(
                       'Détails de l\'Échantillon',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: LiquidGlass.heading(fontSize: 22),
                     ),
                     const SizedBox(height: 24),
-                    TextFormField(
+                    GlassInput(
                       controller: _sampleIdController,
-                      decoration: const InputDecoration(
-                        labelText: 'ID Échantillon *',
-                        prefixIcon: Icon(Icons.qr_code),
-                      ),
+                      labelText: 'ID Échantillon *',
+                      prefixIcon: const Icon(Icons.qr_code),
                       validator: (v) =>
                           v == null || v.isEmpty ? 'Champ requis' : null,
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    GlassInput(
                       controller: _typeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Conditionnement',
-                        prefixIcon: Icon(Icons.science_outlined),
-                      ),
+                      labelText: 'Conditionnement',
+                      prefixIcon: const Icon(Icons.science_outlined),
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
                           flex: 2,
-                          child: TextFormField(
+                          child: GlassInput(
                             controller: _quantityController,
                             keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Quantité',
-                              prefixIcon: Icon(Icons.straighten),
-                            ),
+                            labelText: 'Quantité',
+                            prefixIcon: const Icon(Icons.straighten),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: DropdownButtonFormField<String>(
                             value: _selectedUnit,
-                            decoration: const InputDecoration(
+                            dropdownColor: const Color(0xFF1A1A2E),
+                            style: LiquidGlass.body(),
+                            decoration: InputDecoration(
                               labelText: 'Unité',
+                              labelStyle: LiquidGlass.bodySecondary(),
                             ),
                             items: _units
                                 .map(
@@ -150,40 +147,68 @@ class _SampleDetailsScreenState extends ConsumerState<SampleDetailsScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    GlassInput(
                       controller: _conditionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Observations',
-                        prefixIcon: Icon(Icons.thermostat),
-                        hintText: 'Ex: Réfrigéré, Température ambiante...',
-                      ),
+                      labelText: 'Observations',
+                      prefixIcon: const Icon(Icons.thermostat),
+                      hintText: 'Ex: Réfrigéré, Température ambiante...',
                     ),
                     const SizedBox(height: 16),
-                    ListTile(
-                      leading: const Icon(Icons.calendar_today),
-                      title: const Text('Date de collecte'),
-                      subtitle: Text(
-                        '${_collectionDate.day.toString().padLeft(2, '0')}/${_collectionDate.month.toString().padLeft(2, '0')}/${_collectionDate.year}',
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: theme.colorScheme.outline.withValues(
-                            alpha: 0.3,
-                          ),
-                        ),
-                      ),
+                    GestureDetector(
                       onTap: () async {
                         final date = await showDatePicker(
                           context: context,
                           initialDate: _collectionDate,
                           firstDate: DateTime(2020),
                           lastDate: DateTime.now(),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: ColorScheme.dark(
+                                  primary: LiquidGlass.accentBlue,
+                                  surface: const Color(0xFF1A1A2E),
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
                         );
                         if (date != null) {
                           setState(() => _collectionDate = date);
                         }
                       },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: LiquidGlass.inputFill,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: LiquidGlass.inputBorder),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today,
+                              color: LiquidGlass.textSecondary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'DATE DE COLLECTE',
+                                  style: LiquidGlass.label(),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${_collectionDate.day.toString().padLeft(2, '0')}/${_collectionDate.month.toString().padLeft(2, '0')}/${_collectionDate.year}',
+                                  style: LiquidGlass.body(),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -195,17 +220,15 @@ class _SampleDetailsScreenState extends ConsumerState<SampleDetailsScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: GlassButton(
+                    label: 'Précédent',
+                    isOutlined: true,
                     onPressed: () => context.pop(),
-                    child: const Text('Précédent'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: FilledButton(
-                    onPressed: _saveAndNext,
-                    child: const Text('Suivant'),
-                  ),
+                  child: GlassButton(label: 'Suivant', onPressed: _saveAndNext),
                 ),
               ],
             ),

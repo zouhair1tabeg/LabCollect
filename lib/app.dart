@@ -14,9 +14,8 @@ class LabCollectApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'LabCollect',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      theme: AppTheme.theme,
+      themeMode: ThemeMode.dark,
       routerConfig: router,
     );
   }

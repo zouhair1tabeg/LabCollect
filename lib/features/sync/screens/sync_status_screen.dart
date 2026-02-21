@@ -3,7 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/liquid_glass_theme.dart';
 import '../../../shared/services/connectivity_service.dart';
+import '../../../shared/widgets/glass_card.dart';
+import '../../../shared/widgets/glass_button.dart';
+import '../../../shared/widgets/glass_scaffold.dart';
 import '../providers/sync_provider.dart';
 
 class SyncStatusScreen extends ConsumerWidget {
@@ -11,78 +15,77 @@ class SyncStatusScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final syncState = ref.watch(syncProvider);
     final isOnline = ref.watch(isOnlineProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Synchronisation'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
+    return GlassScaffold(
+      title: 'Synchronisation',
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back, color: LiquidGlass.textPrimary),
+        onPressed: () => context.pop(),
       ),
       body: Column(
         children: [
           // Connectivity banner
-          Container(
-            width: double.infinity,
+          GlassCard(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            color: isOnline
-                ? Colors.green.withValues(alpha: 0.1)
-                : Colors.red.withValues(alpha: 0.1),
+            borderRadius: 0,
+            borderColor: isOnline
+                ? LiquidGlass.done.withValues(alpha: 0.30)
+                : LiquidGlass.error.withValues(alpha: 0.30),
             child: Row(
               children: [
                 Icon(
                   isOnline ? Icons.wifi : Icons.wifi_off,
                   size: 18,
-                  color: isOnline ? Colors.green : Colors.red,
+                  color: isOnline ? LiquidGlass.done : LiquidGlass.error,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   isOnline
                       ? 'Connecté — synchronisation possible'
                       : 'Hors ligne — en attente de connexion',
-                  style: TextStyle(
-                    color: isOnline
-                        ? Colors.green.shade700
-                        : Colors.red.shade700,
-                    fontWeight: FontWeight.w500,
+                  style: LiquidGlass.body(fontSize: 13).copyWith(
+                    color: isOnline ? LiquidGlass.done : LiquidGlass.error,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
 
+          const SizedBox(height: 16),
+
           // Stats cards
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 _StatCard(
-                  label: 'En attente',
+                  label: 'EN ATTENTE',
                   count: syncState.pendingCount,
-                  color: Colors.orange,
+                  color: LiquidGlass.pending,
                   icon: Icons.hourglass_empty,
                 ),
                 const SizedBox(width: 8),
                 _StatCard(
-                  label: 'Synchronisés',
+                  label: 'SYNCHRONISÉS',
                   count: syncState.syncedCount,
-                  color: Colors.green,
+                  color: LiquidGlass.done,
                   icon: Icons.check_circle,
                 ),
                 const SizedBox(width: 8),
                 _StatCard(
-                  label: 'Échoués',
+                  label: 'ÉCHOUÉS',
                   count: syncState.failedCount,
-                  color: Colors.red,
+                  color: LiquidGlass.error,
                   icon: Icons.error,
                 ),
               ],
             ),
           ),
+
+          const SizedBox(height: 16),
 
           // Action buttons
           Padding(
@@ -90,35 +93,27 @@ class SyncStatusScreen extends ConsumerWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: FilledButton.icon(
+                  child: GlassButton(
+                    label: syncState.uiStatus == SyncUiStatus.syncing
+                        ? 'Synchronisation...'
+                        : 'Synchroniser',
+                    icon: Icons.sync,
+                    isLoading: syncState.uiStatus == SyncUiStatus.syncing,
                     onPressed:
                         syncState.uiStatus == SyncUiStatus.syncing || !isOnline
                         ? null
                         : () => ref.read(syncProvider.notifier).syncNow(),
-                    icon: syncState.uiStatus == SyncUiStatus.syncing
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.sync),
-                    label: Text(
-                      syncState.uiStatus == SyncUiStatus.syncing
-                          ? 'Synchronisation...'
-                          : 'Synchroniser',
-                    ),
                   ),
                 ),
                 if (syncState.failedCount > 0) ...[
                   const SizedBox(width: 8),
-                  OutlinedButton.icon(
+                  GlassButton(
+                    label: 'Réessayer',
+                    icon: Icons.refresh,
+                    isOutlined: true,
+                    accentColor: LiquidGlass.pending,
                     onPressed: () =>
                         ref.read(syncProvider.notifier).retryFailed(),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Réessayer'),
                   ),
                 ],
               ],
@@ -129,21 +124,16 @@ class SyncStatusScreen extends ConsumerWidget {
           if (syncState.message != null)
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: syncState.uiStatus == SyncUiStatus.error
-                      ? theme.colorScheme.errorContainer
-                      : Colors.green.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              child: GlassCard(
+                borderColor: syncState.uiStatus == SyncUiStatus.error
+                    ? LiquidGlass.error.withValues(alpha: 0.30)
+                    : LiquidGlass.done.withValues(alpha: 0.30),
                 child: Text(
                   syncState.message!,
-                  style: TextStyle(
+                  style: LiquidGlass.body().copyWith(
                     color: syncState.uiStatus == SyncUiStatus.error
-                        ? theme.colorScheme.onErrorContainer
-                        : Colors.green.shade700,
+                        ? LiquidGlass.error
+                        : LiquidGlass.done,
                   ),
                 ),
               ),
@@ -155,13 +145,11 @@ class SyncStatusScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'Dernière synchronisation: ${_formatTime(syncState.lastSyncTime!)}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                style: LiquidGlass.bodySecondary(fontSize: 12),
               ),
             ),
 
-          const Divider(height: 32),
+          Divider(color: Colors.white.withValues(alpha: 0.10), height: 32),
 
           // Queue list
           Expanded(
@@ -173,16 +161,12 @@ class SyncStatusScreen extends ConsumerWidget {
                         Icon(
                           Icons.cloud_done,
                           size: 64,
-                          color: theme.colorScheme.onSurfaceVariant.withValues(
-                            alpha: 0.3,
-                          ),
+                          color: Colors.white.withValues(alpha: 0.15),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'Aucun élément en attente',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
+                          style: LiquidGlass.bodySecondary(),
                         ),
                       ],
                     ),
@@ -192,20 +176,40 @@ class SyncStatusScreen extends ConsumerWidget {
                     itemCount: syncState.items.length,
                     itemBuilder: (context, index) {
                       final item = syncState.items[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: Icon(
-                            _statusIcon(item.status),
-                            color: _statusColor(item.status),
-                          ),
-                          title: Text('Mission: ${item.missionId}'),
-                          subtitle: Text(
-                            '${item.status.label} • ${item.attempts} tentative(s)',
-                          ),
-                          trailing: Text(
-                            _formatTime(item.createdAt),
-                            style: theme.textTheme.bodySmall,
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: GlassCard(
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _statusIcon(item.status),
+                                color: _statusColor(item.status),
+                                size: 22,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Mission: ${item.missionId}',
+                                      style: LiquidGlass.body(fontSize: 14),
+                                    ),
+                                    Text(
+                                      '${item.status.label} • ${item.attempts} tentative(s)',
+                                      style: LiquidGlass.bodySecondary(
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                _formatTime(item.createdAt),
+                                style: LiquidGlass.bodySecondary(fontSize: 11),
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -217,11 +221,12 @@ class SyncStatusScreen extends ConsumerWidget {
           if (syncState.syncedCount > 0)
             Padding(
               padding: const EdgeInsets.all(16),
-              child: TextButton.icon(
+              child: GlassButton(
+                label: 'Effacer les éléments synchronisés',
+                icon: Icons.cleaning_services,
+                isOutlined: true,
                 onPressed: () =>
                     ref.read(syncProvider.notifier).clearCompleted(),
-                icon: const Icon(Icons.cleaning_services),
-                label: const Text('Effacer les éléments synchronisés'),
               ),
             ),
         ],
@@ -245,13 +250,13 @@ class SyncStatusScreen extends ConsumerWidget {
   Color _statusColor(SyncStatus status) {
     switch (status) {
       case SyncStatus.pending:
-        return Colors.orange;
+        return LiquidGlass.pending;
       case SyncStatus.syncing:
-        return Colors.blue;
+        return LiquidGlass.accentBlue;
       case SyncStatus.synced:
-        return Colors.green;
+        return LiquidGlass.done;
       case SyncStatus.failed:
-        return Colors.red;
+        return LiquidGlass.error;
     }
   }
 
@@ -277,29 +282,21 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Expanded(
-      child: Container(
+      child: GlassCard(
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
-        ),
+        borderColor: color.withValues(alpha: 0.20),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 4),
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 6),
             Text(
               '$count',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+              style: LiquidGlass.heading(fontSize: 24).copyWith(color: color),
             ),
             Text(
               label,
-              style: theme.textTheme.labelSmall?.copyWith(color: color),
+              style: LiquidGlass.label().copyWith(color: color, fontSize: 9),
               textAlign: TextAlign.center,
             ),
           ],

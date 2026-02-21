@@ -1,8 +1,11 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../core/theme/liquid_glass_theme.dart';
+import 'glass_button.dart';
 
-/// Reusable confirmation dialog for critical actions
+/// Reusable confirmation dialog styled with Liquid Glass.
 class ConfirmDialog {
-  /// Show a confirmation dialog and return true if confirmed
+  /// Show a glass-styled confirmation dialog and return true if confirmed.
   static Future<bool> show({
     required BuildContext context,
     required String title,
@@ -13,24 +16,37 @@ class ConfirmDialog {
   }) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(cancelLabel),
+      barrierColor: Colors.black54,
+      builder: (ctx) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF1A1A2E).withValues(alpha: 0.95),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(LiquidGlass.glassRadius),
+            side: BorderSide(color: LiquidGlass.glassBorder),
           ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: isDestructive
-                ? FilledButton.styleFrom(
-                    backgroundColor: Theme.of(ctx).colorScheme.error,
-                  )
-                : null,
-            child: Text(confirmLabel),
-          ),
-        ],
+          title: Text(title, style: LiquidGlass.heading(fontSize: 20)),
+          content: Text(message, style: LiquidGlass.bodySecondary()),
+          actionsAlignment: MainAxisAlignment.spaceEvenly,
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            Expanded(
+              child: GlassButton(
+                label: cancelLabel,
+                isOutlined: true,
+                onPressed: () => Navigator.pop(ctx, false),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: GlassButton(
+                label: confirmLabel,
+                accentColor: isDestructive ? LiquidGlass.error : null,
+                onPressed: () => Navigator.pop(ctx, true),
+              ),
+            ),
+          ],
+        ),
       ),
     );
     return result ?? false;

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/liquid_glass_theme.dart';
 
-import '../../core/constants/app_constants.dart';
-
-/// A horizontal step progress indicator for the collection flow
+/// Glass-styled step progress bar with animated gradient segments.
 class StepProgressIndicator extends StatelessWidget {
   final int currentStep;
   final int totalSteps;
@@ -15,53 +14,71 @@ class StepProgressIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Column(
-      children: [
-        // Step label
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        children: [
+          // Step label
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Étape ${currentStep + 1} / $totalSteps',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
+                'ÉTAPE ${currentStep + 1} / $totalSteps',
+                style: LiquidGlass.label().copyWith(
+                  color: LiquidGlass.accentBlue,
                 ),
               ),
               Text(
-                currentStep < CollectionStep.values.length
-                    ? CollectionStep.values[currentStep].label
-                    : '',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                '${((currentStep + 1) / totalSteps * 100).round()}%',
+                style: LiquidGlass.bodySecondary(fontSize: 12),
               ),
             ],
           ),
-        ),
-
-        // Progress bar
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: (currentStep + 1) / totalSteps,
-              minHeight: 6,
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                theme.colorScheme.primary,
-              ),
-            ),
+          const SizedBox(height: 8),
+          // Segmented progress bar
+          Row(
+            children: List.generate(totalSteps, (index) {
+              final isActive = index <= currentStep;
+              final isCurrent = index == currentStep;
+              return Expanded(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                  height: 3,
+                  margin: EdgeInsets.only(
+                    right: index < totalSteps - 1 ? 3 : 0,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    gradient: isActive
+                        ? LinearGradient(
+                            colors: [
+                              LiquidGlass.accentBlue,
+                              LiquidGlass.accentViolet,
+                            ],
+                          )
+                        : null,
+                    color: isActive
+                        ? null
+                        : Colors.white.withValues(alpha: 0.15),
+                    boxShadow: isCurrent
+                        ? [
+                            BoxShadow(
+                              color: LiquidGlass.accentBlue.withValues(
+                                alpha: 0.5,
+                              ),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
+                  ),
+                ),
+              );
+            }),
           ),
-        ),
-
-        const SizedBox(height: 8),
-      ],
+        ],
+      ),
     );
   }
 }

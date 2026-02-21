@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/liquid_glass_theme.dart';
+import '../../../shared/widgets/glass_button.dart';
+import '../../../shared/widgets/glass_input.dart';
+import '../../../shared/widgets/glass_scaffold.dart';
 import '../../../shared/widgets/step_progress_indicator.dart';
 import '../providers/collection_provider.dart';
 
@@ -63,10 +67,8 @@ class _ClientInfoScreenState extends ConsumerState<ClientInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Informations Client')),
+    return GlassScaffold(
+      title: 'Informations Client',
       body: Column(
         children: [
           const StepProgressIndicator(currentStep: 2),
@@ -80,54 +82,42 @@ class _ClientInfoScreenState extends ConsumerState<ClientInfoScreen> {
                   children: [
                     Text(
                       'Informations du Client',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: LiquidGlass.heading(fontSize: 22),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       'Renseignez les coordonnées du client',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                      style: LiquidGlass.bodySecondary(),
                     ),
                     const SizedBox(height: 24),
-                    TextFormField(
+                    GlassInput(
                       controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nom du client *',
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
+                      labelText: 'Nom du client *',
+                      prefixIcon: const Icon(Icons.person_outline),
                       validator: (v) =>
                           v == null || v.isEmpty ? 'Champ requis' : null,
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    GlassInput(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: 'Téléphone',
-                        prefixIcon: Icon(Icons.phone_outlined),
-                      ),
+                      labelText: 'Téléphone',
+                      prefixIcon: const Icon(Icons.phone_outlined),
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    GlassInput(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
-                      ),
+                      labelText: 'Email',
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    GlassInput(
                       controller: _addressController,
                       maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'Adresse',
-                        prefixIcon: Icon(Icons.location_on_outlined),
-                        alignLabelWithHint: true,
-                      ),
+                      labelText: 'Adresse',
+                      prefixIcon: const Icon(Icons.location_on_outlined),
+                      alignLabelWithHint: true,
                     ),
                   ],
                 ),
@@ -139,17 +129,15 @@ class _ClientInfoScreenState extends ConsumerState<ClientInfoScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: GlassButton(
+                    label: 'Précédent',
+                    isOutlined: true,
                     onPressed: () => context.pop(),
-                    child: const Text('Précédent'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: FilledButton(
-                    onPressed: _saveAndNext,
-                    child: const Text('Suivant'),
-                  ),
+                  child: GlassButton(label: 'Suivant', onPressed: _saveAndNext),
                 ),
               ],
             ),

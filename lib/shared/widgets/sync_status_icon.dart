@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/liquid_glass_theme.dart';
 import '../../features/sync/providers/sync_provider.dart';
 import '../services/connectivity_service.dart';
+import 'glass_card.dart';
 
-/// Sync status icon for AppBar
-/// Green = synced, Orange = pending, Red = offline
+/// Glass pill sync indicator with animated dot for AppBar.
 class SyncStatusIcon extends ConsumerWidget {
   const SyncStatusIcon({super.key});
 
@@ -15,93 +16,93 @@ class SyncStatusIcon extends ConsumerWidget {
     final isOnline = ref.watch(isOnlineProvider);
 
     final Color color;
-    final IconData icon;
-    final String tooltip;
+    final String text;
 
     if (!isOnline) {
-      color = Colors.red;
-      icon = Icons.cloud_off;
-      tooltip = 'Hors ligne';
+      color = LiquidGlass.syncOffline;
+      text = 'Hors ligne';
     } else if (syncState.uiStatus == SyncUiStatus.syncing) {
-      color = Colors.blue;
-      icon = Icons.sync;
-      tooltip = 'Synchronisation en cours...';
+      color = LiquidGlass.accentBlue;
+      text = 'Sync...';
     } else if (syncState.pendingCount > 0) {
-      color = Colors.orange;
-      icon = Icons.cloud_upload;
-      tooltip = '${syncState.pendingCount} en attente';
+      color = LiquidGlass.syncOffline;
+      text = '${syncState.pendingCount} en attente';
     } else {
-      color = Colors.green;
-      icon = Icons.cloud_done;
-      tooltip = 'Synchronisé';
+      color = LiquidGlass.syncOnline;
+      text = 'Synced';
     }
 
-    return Tooltip(
-      message: tooltip,
-      child: Stack(
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      borderRadius: 20,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(
-            icon: syncState.uiStatus == SyncUiStatus.syncing
-                ? _AnimatedSyncIcon(color: color)
-                : Icon(icon, color: color),
-            onPressed: () {},
+          _AnimatedDot(color: color),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: LiquidGlass.body(
+              fontSize: 11,
+            ).copyWith(color: color, fontWeight: FontWeight.w600),
           ),
-          if (syncState.pendingCount > 0)
-            Positioned(
-              top: 6,
-              right: 6,
-              child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                child: Text(
-                  '${syncState.pendingCount}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 }
 
-/// Animated rotating sync icon
-class _AnimatedSyncIcon extends StatefulWidget {
+/// Pulsing dot that fades between 0.5 and 1.0 opacity.
+class _AnimatedDot extends StatefulWidget {
   final Color color;
-  const _AnimatedSyncIcon({required this.color});
+  const _AnimatedDot({required this.color});
 
   @override
-  State<_AnimatedSyncIcon> createState() => _AnimatedSyncIconState();
+  State<_AnimatedDot> createState() => _AnimatedDotState();
 }
 
-class _AnimatedSyncIconState extends State<_AnimatedSyncIcon>
+class _AnimatedDotState extends State<_AnimatedDot>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  late final AnimationController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat();
+      duration: const Duration(milliseconds: 1200),
+      lowerBound: 0.5,
+      upperBound: 1.0,
+    )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return RotationTransition(
-      turns: _controller,
-      child: Icon(Icons.sync, color: widget.color),
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, child) => Opacity(
+        opacity: _ctrl.value,
+        child: Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: widget.color,
+            boxShadow: [
+              BoxShadow(
+                color: widget.color.withValues(alpha: 0.5),
+                blurRadius: 6,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

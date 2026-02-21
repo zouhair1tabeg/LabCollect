@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/liquid_glass_theme.dart';
 import '../../../shared/services/connectivity_service.dart';
+import '../../../shared/widgets/glass_button.dart';
+import '../../../shared/widgets/glass_card.dart';
+import '../../../shared/widgets/glass_scaffold.dart';
 import '../../missions/providers/mission_provider.dart';
 import '../../sync/providers/sync_provider.dart';
 import '../providers/collection_provider.dart';
@@ -46,19 +50,15 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
     setState(() => _isSaving = true);
 
     try {
-      // Mark mission as completed
       await ref
           .read(missionProvider.notifier)
           .completeMission(widget.missionId);
 
-      // Check connectivity
       final isOnline = ref.read(isOnlineProvider);
 
       if (isOnline) {
-        // Sync immediately
         await ref.read(syncServiceProvider).syncMission(widget.missionId);
       } else {
-        // Queue for later sync
         await ref
             .read(syncServiceProvider)
             .queueForSync(
@@ -67,7 +67,6 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
             );
       }
 
-      // Clear draft
       await ref
           .read(collectionProvider(widget.missionId).notifier)
           .clearDraft();
@@ -90,11 +89,11 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isOnline = ref.watch(isOnlineProvider);
 
     if (_isSaved) {
-      return Scaffold(
+      return GlassScaffold(
+        showAppBar: false,
         body: Center(
           child: ScaleTransition(
             scale: _scaleAnimation,
@@ -105,22 +104,28 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
+                    color: LiquidGlass.done.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: LiquidGlass.done.withValues(alpha: 0.20),
+                        blurRadius: 40,
+                        spreadRadius: 10,
+                      ),
+                    ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.check_circle,
-                    color: Colors.green,
+                    color: LiquidGlass.done,
                     size: 80,
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
                   'Mission Complétée !',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
+                  style: LiquidGlass.heading(
+                    fontSize: 28,
+                  ).copyWith(color: LiquidGlass.done),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -128,15 +133,13 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
                       ? 'Données synchronisées avec le serveur'
                       : 'Données sauvegardées localement\n(Synchronisation automatique une fois en ligne)',
                   textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                  style: LiquidGlass.bodySecondary(),
                 ),
                 const SizedBox(height: 48),
-                FilledButton.icon(
+                GlassButton(
+                  label: 'Retour aux Missions',
+                  icon: Icons.list,
                   onPressed: () => context.go('/missions'),
-                  icon: const Icon(Icons.list),
-                  label: const Text('Retour aux Missions'),
                 ),
               ],
             ),
@@ -145,8 +148,8 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Complétion')),
+    return GlassScaffold(
+      title: 'Complétion',
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -155,47 +158,41 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
             Icon(
               Icons.cloud_done_outlined,
               size: 80,
-              color: theme.colorScheme.primary,
+              color: LiquidGlass.accentBlue,
             ),
             const SizedBox(height: 24),
             Text(
               'Prêt à enregistrer',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: LiquidGlass.heading(fontSize: 24),
             ),
             const SizedBox(height: 12),
             Text(
               'Toutes les données ont été collectées. Appuyez pour enregistrer la mission.',
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              style: LiquidGlass.bodySecondary(),
             ),
             const SizedBox(height: 16),
 
-            // Connectivity status
-            Container(
+            // Connectivity pill
+            GlassCard(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: isOnline
-                    ? Colors.green.withValues(alpha: 0.1)
-                    : Colors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
+              borderRadius: 20,
+              borderColor: isOnline
+                  ? LiquidGlass.done.withValues(alpha: 0.30)
+                  : LiquidGlass.pending.withValues(alpha: 0.30),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     isOnline ? Icons.wifi : Icons.wifi_off,
                     size: 16,
-                    color: isOnline ? Colors.green : Colors.orange,
+                    color: isOnline ? LiquidGlass.done : LiquidGlass.pending,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     isOnline ? 'En ligne' : 'Hors ligne',
-                    style: TextStyle(
-                      color: isOnline ? Colors.green : Colors.orange,
+                    style: LiquidGlass.body(fontSize: 13).copyWith(
+                      color: isOnline ? LiquidGlass.done : LiquidGlass.pending,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -207,29 +204,23 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
 
             SizedBox(
               width: double.infinity,
-              child: FilledButton.icon(
+              child: GlassButton(
+                label: _isSaving
+                    ? 'Enregistrement...'
+                    : 'Enregistrer la Mission',
+                icon: _isSaving ? null : Icons.save,
+                isLoading: _isSaving,
+                accentColor: LiquidGlass.done,
                 onPressed: _isSaving ? null : _saveMission,
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.save),
-                label: Text(
-                  _isSaving ? 'Enregistrement...' : 'Enregistrer la Mission',
-                ),
               ),
             ),
 
             const SizedBox(height: 12),
 
-            OutlinedButton(
+            GlassButton(
+              label: 'Revenir à la révision',
+              isOutlined: true,
               onPressed: () => context.pop(),
-              child: const Text('Revenir à la révision'),
             ),
           ],
         ),

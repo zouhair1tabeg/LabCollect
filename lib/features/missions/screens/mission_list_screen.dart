@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/liquid_glass_theme.dart';
 import '../../../shared/models/mission_model.dart';
+import '../../../shared/widgets/glass_card.dart';
+import '../../../shared/widgets/glass_scaffold.dart';
 import '../../../shared/widgets/loading_widget.dart';
+import '../../../shared/widgets/sync_status_icon.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/mission_provider.dart';
 
@@ -13,44 +17,50 @@ class MissionListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final missionState = ref.watch(missionProvider);
 
     return DefaultTabController(
       length: 4,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Mes Missions'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.sync),
-              tooltip: 'Synchronisation',
-              onPressed: () => context.push('/sync-status'),
+      child: GlassScaffold(
+        title: 'Mes Missions',
+        actions: [
+          const SyncStatusIcon(),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: Icon(Icons.logout, color: LiquidGlass.textSecondary),
+            tooltip: 'Déconnexion',
+            onPressed: () => _confirmLogout(context, ref),
+          ),
+        ],
+        bottom: TabBar(
+          onTap: (index) {
+            final filter = MissionFilter.values[index];
+            ref.read(missionProvider.notifier).setFilter(filter);
+          },
+          tabs: [
+            _buildTab(
+              'Toutes',
+              missionState.missions.length,
+              LiquidGlass.accentBlue,
             ),
-            IconButton(
-              icon: const Icon(Icons.logout),
-              tooltip: 'Déconnexion',
-              onPressed: () => _confirmLogout(context, ref),
+            _buildTab(
+              'En attente',
+              missionState.pendingCount,
+              LiquidGlass.pending,
+            ),
+            _buildTab(
+              'En cours',
+              missionState.inProgressCount,
+              LiquidGlass.accentViolet,
+            ),
+            _buildTab(
+              'Terminées',
+              missionState.completedCount,
+              LiquidGlass.done,
             ),
           ],
-          bottom: TabBar(
-            onTap: (index) {
-              final filter = MissionFilter.values[index];
-              ref.read(missionProvider.notifier).setFilter(filter);
-            },
-            tabs: [
-              _buildTab('Toutes', missionState.missions.length, theme),
-              _buildTab('En attente', missionState.pendingCount, Colors.orange),
-              _buildTab(
-                'En cours',
-                missionState.inProgressCount,
-                theme.colorScheme.primary,
-              ),
-              _buildTab('Terminées', missionState.completedCount, Colors.green),
-            ],
-            indicatorSize: TabBarIndicatorSize.label,
-            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-          ),
+          indicatorSize: TabBarIndicatorSize.label,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 4),
         ),
         body: missionState.isLoading
             ? const LoadingWidget(message: 'Chargement des missions...')
@@ -63,6 +73,8 @@ class MissionListScreen extends ConsumerWidget {
             : missionState.filteredMissions.isEmpty
             ? _EmptyView(filter: missionState.filter)
             : RefreshIndicator(
+                color: LiquidGlass.accentBlue,
+                backgroundColor: LiquidGlass.bgDark,
                 onRefresh: () =>
                     ref.read(missionProvider.notifier).loadMissions(),
                 child: ListView.builder(
@@ -81,16 +93,7 @@ class MissionListScreen extends ConsumerWidget {
     );
   }
 
-  Tab _buildTab(String label, int count, dynamic colorOrTheme) {
-    final Color badgeColor;
-    if (colorOrTheme is Color) {
-      badgeColor = colorOrTheme;
-    } else if (colorOrTheme is ThemeData) {
-      badgeColor = colorOrTheme.colorScheme.primary;
-    } else {
-      badgeColor = Colors.grey;
-    }
-
+  Tab _buildTab(String label, int count, Color badgeColor) {
     return Tab(
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -99,16 +102,14 @@ class MissionListScreen extends ConsumerWidget {
           const SizedBox(width: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: badgeColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
+            decoration: LiquidGlass.statusBadge(badgeColor),
             child: Text(
               '$count',
               style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
                 color: badgeColor,
+                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -144,19 +145,28 @@ class MissionListScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Déconnexion'),
-        content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+        title: Text('Déconnexion', style: LiquidGlass.heading(fontSize: 20)),
+        content: Text(
+          'Êtes-vous sûr de vouloir vous déconnecter ?',
+          style: LiquidGlass.bodySecondary(),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Annuler'),
+            child: Text(
+              'Annuler',
+              style: TextStyle(color: LiquidGlass.textSecondary),
+            ),
           ),
-          FilledButton(
+          TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               ref.read(authProvider.notifier).logout();
             },
-            child: const Text('Déconnexion'),
+            child: Text(
+              'Déconnexion',
+              style: TextStyle(color: LiquidGlass.error),
+            ),
           ),
         ],
       ),
@@ -175,11 +185,11 @@ class _MissionCard extends StatelessWidget {
   Color _statusColor(MissionStatus status) {
     switch (status) {
       case MissionStatus.pending:
-        return Colors.orange;
+        return LiquidGlass.pending;
       case MissionStatus.inProgress:
-        return const Color(0xFF1565C0);
+        return LiquidGlass.accentViolet;
       case MissionStatus.completed:
-        return Colors.green;
+        return LiquidGlass.done;
     }
   }
 
@@ -197,9 +207,9 @@ class _MissionCard extends StatelessWidget {
   String _actionLabel(MissionStatus status) {
     switch (status) {
       case MissionStatus.pending:
-        return 'Commencer Collecte';
+        return 'Commencer';
       case MissionStatus.inProgress:
-        return 'Reprendre Collecte';
+        return 'Reprendre';
       case MissionStatus.completed:
         return 'Voir Détails';
     }
@@ -207,106 +217,114 @@ class _MissionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final statusColor = _statusColor(mission.status);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      clipBehavior: Clip.hardEdge,
-      child: InkWell(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GestureDetector(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Row(
-          children: [
-            // Status color strip
-            Container(width: 5, height: 100, color: statusColor),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          _statusIcon(mission.status),
-                          color: statusColor,
-                          size: 24,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            mission.title,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        Chip(
-                          label: Text(
-                            mission.status.label,
-                            style: TextStyle(
-                              color: statusColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          backgroundColor: statusColor.withValues(alpha: 0.1),
-                          side: BorderSide.none,
-                          padding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ],
-                    ),
-                    if (mission.description.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        mission.description,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        if (mission.status == MissionStatus.inProgress)
-                          Text(
-                            'Étape ${mission.lastCompletedStep + 2}/${CollectionStep.totalSteps}',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          )
-                        else
-                          const SizedBox.shrink(),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _actionLabel(mission.status),
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: statusColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              size: 14,
-                              color: statusColor,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
+        child: GlassCard(
+          padding: EdgeInsets.zero,
+          child: Row(
+            children: [
+              // Status color strip
+              Container(
+                width: 4,
+                height: 90,
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(28),
+                    bottomLeft: Radius.circular(28),
+                  ),
                 ),
               ),
-            ),
-          ],
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            _statusIcon(mission.status),
+                            color: statusColor,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              mission.title,
+                              style: LiquidGlass.body(
+                                fontSize: 16,
+                              ).copyWith(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: LiquidGlass.statusBadge(statusColor),
+                            child: Text(
+                              mission.status.label,
+                              style: TextStyle(
+                                color: statusColor,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (mission.description.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          mission.description,
+                          style: LiquidGlass.bodySecondary(),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (mission.status == MissionStatus.inProgress)
+                            Text(
+                              'Étape ${mission.lastCompletedStep + 2}/${CollectionStep.totalSteps}',
+                              style: LiquidGlass.bodySecondary(fontSize: 11),
+                            )
+                          else
+                            const SizedBox.shrink(),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _actionLabel(mission.status),
+                                style: LiquidGlass.body(fontSize: 13).copyWith(
+                                  color: statusColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                size: 12,
+                                color: statusColor,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -323,25 +341,32 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 56, color: theme.colorScheme.error),
+            Icon(Icons.error_outline, size: 56, color: LiquidGlass.error),
             const SizedBox(height: 16),
             Text(
               error,
-              style: TextStyle(color: theme.colorScheme.error),
+              style: LiquidGlass.bodySecondary().copyWith(
+                color: LiquidGlass.error,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Réessayer'),
+            GlassCard(
+              padding: EdgeInsets.zero,
+              child: TextButton.icon(
+                onPressed: onRetry,
+                icon: Icon(Icons.refresh, color: LiquidGlass.accentBlue),
+                label: Text(
+                  'Réessayer',
+                  style: TextStyle(color: LiquidGlass.accentBlue),
+                ),
+              ),
             ),
           ],
         ),
@@ -359,8 +384,6 @@ class _EmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     final String message;
     final IconData icon;
 
@@ -387,18 +410,9 @@ class _EmptyView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 64,
-            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-          ),
+          Icon(icon, size: 64, color: Colors.white.withValues(alpha: 0.20)),
           const SizedBox(height: 16),
-          Text(
-            message,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
+          Text(message, style: LiquidGlass.bodySecondary(fontSize: 16)),
         ],
       ),
     );

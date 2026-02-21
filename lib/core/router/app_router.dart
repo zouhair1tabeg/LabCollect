@@ -219,7 +219,7 @@ Widget _buildCollectionScreen(String missionId, int step) {
   }
 }
 
-/// Horizontal slide page transition for collection flow
+/// Horizontal slide + fade page transition for collection flow
 CustomTransitionPage _slideTransitionPage({
   required LocalKey key,
   required Widget child,
@@ -236,7 +236,15 @@ CustomTransitionPage _slideTransitionPage({
             CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic),
           );
 
-      return SlideTransition(position: offsetAnimation, child: child);
+      final fadeAnimation = Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeIn));
+
+      return FadeTransition(
+        opacity: fadeAnimation,
+        child: SlideTransition(position: offsetAnimation, child: child),
+      );
     },
     transitionDuration: const Duration(milliseconds: 300),
   );

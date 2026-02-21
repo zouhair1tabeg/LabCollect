@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/liquid_glass_theme.dart';
+import '../../../shared/widgets/glass_button.dart';
+import '../../../shared/widgets/glass_input.dart';
+import '../../../shared/widgets/glass_scaffold.dart';
 import '../../../shared/widgets/step_progress_indicator.dart';
 import '../providers/collection_provider.dart';
 
@@ -59,10 +63,8 @@ class _ProductInfoScreenState extends ConsumerState<ProductInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Informations Produit')),
+    return GlassScaffold(
+      title: 'Informations Produit',
       body: Column(
         children: [
           const StepProgressIndicator(currentStep: 3),
@@ -76,50 +78,38 @@ class _ProductInfoScreenState extends ConsumerState<ProductInfoScreen> {
                   children: [
                     Text(
                       'Informations du Produit',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: LiquidGlass.heading(fontSize: 22),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       'Décrivez le produit à analyser',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                      style: LiquidGlass.bodySecondary(),
                     ),
                     const SizedBox(height: 24),
-                    TextFormField(
+                    GlassInput(
                       controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nom du produit *',
-                        prefixIcon: Icon(Icons.inventory_2_outlined),
-                      ),
+                      labelText: 'Nom du produit *',
+                      prefixIcon: const Icon(Icons.inventory_2_outlined),
                       validator: (v) =>
                           v == null || v.isEmpty ? 'Champ requis' : null,
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    GlassInput(
                       controller: _typeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Type de produit',
-                        prefixIcon: Icon(Icons.category_outlined),
-                      ),
+                      labelText: 'Type de produit',
+                      prefixIcon: const Icon(Icons.category_outlined),
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    GlassInput(
                       controller: _batchController,
-                      decoration: const InputDecoration(
-                        labelText: 'Numéro de lot',
-                        prefixIcon: Icon(Icons.numbers),
-                      ),
+                      labelText: 'Numéro de lot',
+                      prefixIcon: const Icon(Icons.numbers),
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    GlassInput(
                       controller: _originController,
-                      decoration: const InputDecoration(
-                        labelText: 'Origine / Provenance',
-                        prefixIcon: Icon(Icons.public),
-                      ),
+                      labelText: 'Origine / Provenance',
+                      prefixIcon: const Icon(Icons.public),
                     ),
                   ],
                 ),
@@ -131,17 +121,15 @@ class _ProductInfoScreenState extends ConsumerState<ProductInfoScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: GlassButton(
+                    label: 'Précédent',
+                    isOutlined: true,
                     onPressed: () => context.pop(),
-                    child: const Text('Précédent'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: FilledButton(
-                    onPressed: _saveAndNext,
-                    child: const Text('Suivant'),
-                  ),
+                  child: GlassButton(label: 'Suivant', onPressed: _saveAndNext),
                 ),
               ],
             ),
